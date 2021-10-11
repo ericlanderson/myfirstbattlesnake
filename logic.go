@@ -69,28 +69,26 @@ func move(state GameState) BattlesnakeMoveResponse {
 	boardWidth := state.Board.Width
 	boardHeight := state.Board.Height
 
-	for move, validMove := range possibleMoves {
-		if validMove {
-			switch move {
-			case "up":
-				if myHead.Y == boardHeight-1 {
-					possibleMoves["up"] = false
-				}
-			case "down":
-				if myHead.Y == 0 {
-					possibleMoves["down"] = false
-				}
-			case "right":
-				if myHead.X == boardWidth-1 {
-					possibleMoves["right"] = false
-				}
-			case "left":
-				if myHead.X == 0 {
-					possibleMoves["left"] = false
-				}
+	for move, _ := range possibleMoves {
+		switch move {
+		case "up":
+			if myHead.Y == boardHeight-1 {
+				possibleMoves["up"] = false
 			}
-
+		case "down":
+			if myHead.Y == 0 {
+				possibleMoves["down"] = false
+			}
+		case "right":
+			if myHead.X == boardWidth-1 {
+				possibleMoves["right"] = false
+			}
+		case "left":
+			if myHead.X == 0 {
+				possibleMoves["left"] = false
+			}
 		}
+
 	}
 
 	// TODO: Step 2 - Don't hit yourself.
@@ -122,7 +120,6 @@ func move(state GameState) BattlesnakeMoveResponse {
 					possibleMoves["left"] = false
 				}
 			}
-
 		}
 	}
 
@@ -134,9 +131,9 @@ func move(state GameState) BattlesnakeMoveResponse {
 	// TODO: Step 4 - Find food.
 	// Use information in GameState to seek out and find food.
 	closestFood := state.Board.Food[0]
-	closestFoodDistance := foodDistance(myHead, closestFood)
+	closestFoodDistance := distance(myHead, closestFood)
 	for _, food := range state.Board.Food[1:] {
-		nextFoodDistance := foodDistance(myHead, food)
+		nextFoodDistance := distance(myHead, food)
 		if nextFoodDistance < closestFoodDistance {
 			closestFood = food
 			closestFoodDistance = nextFoodDistance
@@ -205,6 +202,6 @@ func checkNextAgainstSnakes(nextCoord Coord, snakes []Battlesnake) bool {
 	return false
 }
 
-func foodDistance(head Coord, food Coord) float64 {
+func distance(head Coord, food Coord) float64 {
 	return math.Sqrt(math.Pow(float64(food.X-head.X), 2) + math.Pow(float64(food.Y-head.Y), 2))
 }
