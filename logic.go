@@ -202,6 +202,6 @@ func checkNextAgainstSnakes(nextCoord Coord, snakes []Battlesnake) bool {
 	return false
 }
 
-func distance(head Coord, food Coord) float64 {
-	return math.Sqrt(math.Pow(float64(food.X-head.X), 2) + math.Pow(float64(food.Y-head.Y), 2))
+func distance(a Coord, b Coord) float64 {
+	return math.Sqrt(math.Pow(float64(b.X-a.X), 2) + math.Pow(float64(b.Y-a.Y), 2))
 }
