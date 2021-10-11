@@ -51,6 +51,13 @@ func move(state GameState) BattlesnakeMoveResponse {
 		"right": true,
 	}
 
+	foodMoves := map[string]bool{
+		"up":    false,
+		"down":  false,
+		"left":  false,
+		"right": false,
+	}
+
 	// Step 0: Don't let your Battlesnake move back in on it's own neck
 	myHead := state.You.Body[0] // Coordinates of your head; same as state.You.Head
 	// myNeck := state.You.Body[1] // Coordinates of body piece directly behind your head (your "neck")
@@ -155,16 +162,25 @@ func move(state GameState) BattlesnakeMoveResponse {
 		}
 	}
 
-	desiredMoves := []string{}
-	if myHead.X <= closestFood.X { desiredMoves = append(desiredMoves, "right")
-	if myHead.X > closestFood.X { desiredMoves = append(desiredMoves, "left")
-	if myHead.Y <= closestFood.Y { desiredMoves = append(desiredMoves, "up")
-	if myHead.Y > closestFood.Y { desiredMoves = append(desiredMoves, "down")
+	// Set our desired moves based on the current closest food
+	if myHead.X < closestFood.X {
+		foodMoves["right"] = true
+	}
+	if myHead.X > closestFood.X {
+		foodMoves["left"] = true
+	}
+	if myHead.Y < closestFood.Y {
+		foodMoves["up"] = true
+	}
+	if myHead.Y > closestFood.Y {
+		foodMoves["down"] = true
+	}
 
 	// Finally, choose a move from the available safe moves.
 	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
 	var nextMove string
 
+	// The list of safe moves
 	safeMoves := []string{}
 	for move, isSafe := range possibleMoves {
 		if isSafe {
@@ -172,11 +188,24 @@ func move(state GameState) BattlesnakeMoveResponse {
 		}
 	}
 
+	// The list of desired and safe moves
+	desiredMoves := []string{}
+	for move, isDesired := range foodMoves {
+		if isDesired && possibleMoves[move] {
+			desiredMoves = append(desiredMoves, move)
+		}
+	}
+
 	if len(safeMoves) == 0 {
 		nextMove = "down"
 		log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
 	} else {
-		nextMove = safeMoves[rand.Intn(len(safeMoves))]
+		if len(desiredMoves) > 0 {
+			nextMove = desiredMoves[rand.Intn(len(desiredMoves))]
+
+		} else {
+			nextMove = safeMoves[rand.Intn(len(safeMoves))]
+		}
 		log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
 	}
 	return BattlesnakeMoveResponse{
