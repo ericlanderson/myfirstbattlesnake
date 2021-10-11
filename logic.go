@@ -7,6 +7,7 @@ package main
 
 import (
 	"log"
+	"math"
 	"math/rand"
 )
 
@@ -51,7 +52,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 
 	// Step 0: Don't let your Battlesnake move back in on it's own neck
-	myHead := state.You.Body[0] // Coordinates of your head
+	myHead := state.You.Body[0] // Coordinates of your head; same as state.You.Head
 	// myNeck := state.You.Body[1] // Coordinates of body piece directly behind your head (your "neck")
 
 	// We do this in step 2.
@@ -144,6 +145,21 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	// TODO: Step 4 - Find food.
 	// Use information in GameState to seek out and find food.
+	closestFood := state.Board.Food[0]
+	closestFoodDistance := foodDistance(myHead, closestFood)
+	for _, food := range state.Board.Food[1:] {
+		nextFoodDistance := foodDistance(myHead, food)
+		if nextFoodDistance < closestFoodDistance {
+			closestFood = food
+			closestFoodDistance = nextFoodDistance
+		}
+	}
+
+	desiredMoves := []string{}
+	if myHead.X <= closestFood.X { desiredMoves = append(desiredMoves, "right")
+	if myHead.X > closestFood.X { desiredMoves = append(desiredMoves, "left")
+	if myHead.Y <= closestFood.Y { desiredMoves = append(desiredMoves, "up")
+	if myHead.Y > closestFood.Y { desiredMoves = append(desiredMoves, "down")
 
 	// Finally, choose a move from the available safe moves.
 	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
@@ -177,4 +193,8 @@ func checkNextAgainstSnakes(nextCoord Coord, snakes []Battlesnake) bool {
 		}
 	}
 	return false
+}
+
+func foodDistance(head Coord, food Coord) float64 {
+	return math.Sqrt(math.Pow(float64(food.X-head.X), 2) + math.Pow(float64(food.Y-head.Y), 2))
 }
