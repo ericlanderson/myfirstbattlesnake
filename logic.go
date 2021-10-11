@@ -64,35 +64,16 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	// We do this in step 2.
 
-	// if myNeck.X < myHead.X {
-	// 	possibleMoves["left"] = false
-	// } else if myNeck.X > myHead.X {
-	// 	possibleMoves["right"] = false
-	// } else if myNeck.Y < myHead.Y {
-	// 	possibleMoves["down"] = false
-	// } else if myNeck.Y > myHead.Y {
-	// 	possibleMoves["up"] = false
-	// }
-
 	// TODO: Step 1 - Don't hit walls.
 	// Use information in GameState to prevent your Battlesnake from moving beyond the boundaries of the board.
-	// boardWidth := state.Board.Width
-	// boardHeight := state.Board.Height
-	// if myHead.X == 0 {
-	// 	possibleMoves["left"] = false
-	// } else if myHead.X == state.Board.Width-1 {
-	// 	possibleMoves["right"] = false
-	// } else if myHead.Y == 0 {
-	// 	possibleMoves["down"] = false
-	// } else if myHead.Y == state.Board.Height-1 {
-	// 	possibleMoves["up"] = false
-	// }
+	boardWidth := state.Board.Width
+	boardHeight := state.Board.Height
 
 	for move, validMove := range possibleMoves {
 		if validMove {
 			switch move {
 			case "up":
-				if myHead.Y == state.Board.Height-1 {
+				if myHead.Y == boardHeight-1 {
 					possibleMoves["up"] = false
 				}
 			case "down":
@@ -100,7 +81,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 					possibleMoves["down"] = false
 				}
 			case "right":
-				if myHead.X == state.Board.Width-1 {
+				if myHead.X == boardWidth-1 {
 					possibleMoves["right"] = false
 				}
 			case "left":
@@ -200,11 +181,11 @@ func move(state GameState) BattlesnakeMoveResponse {
 		nextMove = "down"
 		log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
 	} else {
-		if len(desiredMoves) > 0 {
-			nextMove = desiredMoves[rand.Intn(len(desiredMoves))]
+		if len(desiredMoves) == 0 {
+			nextMove = safeMoves[rand.Intn(len(safeMoves))]
 
 		} else {
-			nextMove = safeMoves[rand.Intn(len(safeMoves))]
+			nextMove = desiredMoves[rand.Intn(len(desiredMoves))]
 		}
 		log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
 	}
