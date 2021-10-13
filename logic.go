@@ -58,33 +58,37 @@ func move(state GameState) BattlesnakeMoveResponse {
 		"right": false,
 	}
 
-	// Step 0: Don't let your Battlesnake move back in on it's own neck
 	myHead := state.You.Body[0] // Coordinates of your head; same as state.You.Head
 	// myNeck := state.You.Body[1] // Coordinates of body piece directly behind your head (your "neck")
 
-	// We do this in step 2.
-
-	// TODO: Step 1 - Don't hit walls.
-	// Use information in GameState to prevent your Battlesnake from moving beyond the boundaries of the board.
 	boardWidth := state.Board.Width
 	boardHeight := state.Board.Height
 
+	// This is our board state where we record where each object (body or food)
+	// is located. Makes lookups much easier/faster/efficient.
 	grid := make([][]string, boardHeight)
 	for i := range grid {
 		grid[i] = make([]string, boardWidth)
 	}
 
+	// record where each snake body element is on the grid.
 	for _, snake := range state.Board.Snakes {
-		for _, body := range snake.Body {
+		// Can use this later to find "head" that are adjacent to safe spaces.
+		// Likely want to avoid those spaces.
+		grid[snake.Head.X][snake.Head.Y] = "head"
+		// Now set the remainder of the body coordinates
+		for _, body := range snake.Body[1:] {
 			grid[body.X][body.Y] = snake.Name
 		}
 	}
 
+	// record where each food element is on the grid.
 	// Not sure we need this just yet ...
 	// for _, food := range state.Board.Food {
 	// 	grid[food.X][food.Y] = "food"
 	// }
 
+	// Avoid hitting the walls
 	for move, _ := range possibleMoves {
 		switch move {
 		case "up":
@@ -107,36 +111,28 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	}
 
-	// TODO: Step 2 - Don't hit yourself.
-	// Use information in GameState to prevent your Battlesnake from colliding with itself.
-	// mybody := state.You.Body
-
-	// torso := state.You.Body[1:]
-	// mysnake := Battlesnake{Body: torso}
-	// snakes := state.Board.Snakes
-	// snakes = append(snakes, mysnake)
-
+	// Avoid hitting myself or other snakes
 	for move, isSafe := range possibleMoves {
 		if isSafe {
 			switch move {
 			case "up":
-				gridContent := grid[myHead.X][myHead.Y+1]
-				if gridContent != "" {
+				up := grid[myHead.X][myHead.Y+1]
+				if up != "" {
 					possibleMoves["up"] = false
 				}
 			case "down":
-				gridContent := grid[myHead.X][myHead.Y-1]
-				if gridContent != "" {
+				down := grid[myHead.X][myHead.Y-1]
+				if down != "" {
 					possibleMoves["down"] = false
 				}
 			case "right":
-				gridContent := grid[myHead.X+1][myHead.Y]
-				if gridContent != "" {
+				right := grid[myHead.X+1][myHead.Y]
+				if right != "" {
 					possibleMoves["right"] = false
 				}
 			case "left":
-				gridContent := grid[myHead.X-1][myHead.Y]
-				if gridContent != "" {
+				left := grid[myHead.X-1][myHead.Y]
+				if left != "" {
 					possibleMoves["left"] = false
 				}
 			}
@@ -144,8 +140,10 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 
 	// Use information in GameState to seek out and find food.
+	// Assume Food[0] is the closest.
 	closestFood := state.Board.Food[0]
 	closestFoodDistance := distance(myHead, closestFood)
+	// Now check the rest of the food and find which is closest
 	for _, food := range state.Board.Food[1:] {
 		nextFoodDistance := distance(myHead, food)
 		if nextFoodDistance < closestFoodDistance {
@@ -169,7 +167,6 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 
 	// Finally, choose a move from the available safe moves.
-	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
 	var nextMove string
 
 	// The list of safe moves
@@ -204,17 +201,6 @@ func move(state GameState) BattlesnakeMoveResponse {
 		Move: nextMove,
 	}
 }
-
-// func checkNextAgainstSnakes(nextCoord Coord, snakes []Battlesnake) bool {
-// 	for _, snake := range snakes {
-// 		for _, bodyCoord := range snake.Body {
-// 			if nextCoord == bodyCoord {
-// 				return true
-// 			}
-// 		}
-// 	}
-// 	return false
-//}
 
 func distance(a Coord, b Coord) float64 {
 	dX := float64(b.X - a.X)
