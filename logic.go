@@ -143,12 +143,6 @@ func move(state GameState) BattlesnakeMoveResponse {
 		}
 	}
 
-	// TODO: Step 3 - Don't collide with others.
-	// Use information in GameState to prevent your Battlesnake from colliding with others.
-
-	// See number two above. We check both our torso and all the other snakes.
-
-	// TODO: Step 4 - Find food.
 	// Use information in GameState to seek out and find food.
 	closestFood := state.Board.Food[0]
 	closestFoodDistance := distance(myHead, closestFood)
@@ -200,10 +194,11 @@ func move(state GameState) BattlesnakeMoveResponse {
 	} else {
 		if len(desiredMoves) == 0 {
 			nextMove = safeMoves[rand.Intn(len(safeMoves))]
+			log.Printf("%s MOVE %d: No desired moves detected! Making random safe move: %s\n", state.Game.ID, state.Turn, nextMove)
 		} else {
 			nextMove = desiredMoves[rand.Intn(len(desiredMoves))]
+			log.Printf("%s MOVE %d: Making random desired move: %s\n", state.Game.ID, state.Turn, nextMove)
 		}
-		log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
 	}
 	return BattlesnakeMoveResponse{
 		Move: nextMove,
