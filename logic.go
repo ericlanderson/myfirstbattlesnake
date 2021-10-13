@@ -69,6 +69,19 @@ func move(state GameState) BattlesnakeMoveResponse {
 	boardWidth := state.Board.Width
 	boardHeight := state.Board.Height
 
+	grid := make([][]string, 2)
+
+	for _, snake := range state.Board.Snakes {
+		for _, body := range snake.Body {
+			grid[body.X][body.Y] = snake.Name
+		}
+	}
+
+	// Not sure we need this just yet ...
+	// for _, food := range state.Board.Food {
+	// 	grid[food.X][food.Y] = "food"
+	// }
+
 	for move, _ := range possibleMoves {
 		switch move {
 		case "up":
@@ -95,28 +108,32 @@ func move(state GameState) BattlesnakeMoveResponse {
 	// Use information in GameState to prevent your Battlesnake from colliding with itself.
 	// mybody := state.You.Body
 
-	torso := state.You.Body[1:]
-	mysnake := Battlesnake{Body: torso}
-	snakes := state.Board.Snakes
-	snakes = append(snakes, mysnake)
+	// torso := state.You.Body[1:]
+	// mysnake := Battlesnake{Body: torso}
+	// snakes := state.Board.Snakes
+	// snakes = append(snakes, mysnake)
 
 	for move, isSafe := range possibleMoves {
 		if isSafe {
 			switch move {
 			case "up":
-				if checkNextAgainstSnakes(Coord{myHead.X, myHead.Y + 1}, snakes) {
+				gridContent := grid[myHead.X][myHead.Y+1]
+				if gridContent != "" {
 					possibleMoves["up"] = false
 				}
 			case "down":
-				if checkNextAgainstSnakes(Coord{myHead.X, myHead.Y - 1}, snakes) {
+				gridContent := grid[myHead.X][myHead.Y-1]
+				if gridContent != "" {
 					possibleMoves["down"] = false
 				}
 			case "right":
-				if checkNextAgainstSnakes(Coord{myHead.X + 1, myHead.Y}, snakes) {
+				gridContent := grid[myHead.X+1][myHead.Y]
+				if gridContent != "" {
 					possibleMoves["right"] = false
 				}
 			case "left":
-				if checkNextAgainstSnakes(Coord{myHead.X - 1, myHead.Y}, snakes) {
+				gridContent := grid[myHead.X-1][myHead.Y]
+				if gridContent != "" {
 					possibleMoves["left"] = false
 				}
 			}
@@ -180,7 +197,6 @@ func move(state GameState) BattlesnakeMoveResponse {
 	} else {
 		if len(desiredMoves) == 0 {
 			nextMove = safeMoves[rand.Intn(len(safeMoves))]
-
 		} else {
 			nextMove = desiredMoves[rand.Intn(len(desiredMoves))]
 		}
@@ -191,17 +207,19 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 }
 
-func checkNextAgainstSnakes(nextCoord Coord, snakes []Battlesnake) bool {
-	for _, snake := range snakes {
-		for _, bodyCoord := range snake.Body {
-			if nextCoord == bodyCoord {
-				return true
-			}
-		}
-	}
-	return false
+// func checkNextAgainstSnakes(nextCoord Coord, snakes []Battlesnake) bool {
+// 	for _, snake := range snakes {
+// 		for _, bodyCoord := range snake.Body {
+// 			if nextCoord == bodyCoord {
+// 				return true
+// 			}
+// 		}
+// 	}
+// 	return false
 }
 
 func distance(a Coord, b Coord) float64 {
-	return math.Sqrt(math.Pow(float64(b.X-a.X), 2) + math.Pow(float64(b.Y-a.Y), 2))
+	dX := float64(b.X - a.X)
+	dY := float64(b.Y - a.Y)
+	return math.Sqrt(math.Pow(dX, 2) + math.Pow(dY, 2))
 }
