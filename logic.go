@@ -219,7 +219,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 // 		}
 // 	}
 // 	return false
-}
+//}
 
 func distance(a Coord, b Coord) float64 {
 	dX := float64(b.X - a.X)
