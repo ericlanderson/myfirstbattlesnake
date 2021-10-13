@@ -69,7 +69,10 @@ func move(state GameState) BattlesnakeMoveResponse {
 	boardWidth := state.Board.Width
 	boardHeight := state.Board.Height
 
-	grid := make([][]string, 2)
+	grid := make([][]string, boardHeight)
+	for i := range grid {
+		grid[i] = make([]string, boardWidth)
+	}
 
 	for _, snake := range state.Board.Snakes {
 		for _, body := range snake.Body {
