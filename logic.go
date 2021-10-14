@@ -11,6 +11,17 @@ import (
 	"math/rand"
 )
 
+// Enums the golang way
+
+type GridState int
+
+const (
+	Empty GridState = iota
+	Head
+	Body
+	Food
+)
+
 // This function is called when you register your Battlesnake on play.battlesnake.com
 // See https://docs.battlesnake.com/guides/getting-started#step-4-register-your-battlesnake
 // It controls your Battlesnake appearance and author permissions.
@@ -66,27 +77,26 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	// This is our board state where we record where each object (body or food)
 	// is located. Makes lookups much easier/faster/efficient.
-	grid := make([][]string, boardHeight)
+	grid := make([][]GridState, boardHeight)
 	for i := range grid {
-		grid[i] = make([]string, boardWidth)
+		grid[i] = make([]GridState, boardWidth)
 	}
 
 	// record where each snake body element is on the grid.
 	for _, snake := range state.Board.Snakes {
 		// Can use this later to find "head" that are adjacent to safe spaces.
 		// Likely want to avoid those spaces.
-		grid[snake.Head.X][snake.Head.Y] = "head"
+		grid[snake.Head.X][snake.Head.Y] = Head
 		// Now set the remainder of the body coordinates
 		for _, body := range snake.Body[1:] {
-			grid[body.X][body.Y] = snake.Name
+			grid[body.X][body.Y] = Body
 		}
 	}
 
 	// record where each food element is on the grid.
-	// Not sure we need this just yet ...
-	// for _, food := range state.Board.Food {
-	// 	grid[food.X][food.Y] = "food"
-	// }
+	for _, food := range state.Board.Food {
+		grid[food.X][food.Y] = Food
+	}
 
 	// Avoid hitting the walls
 	for move, _ := range possibleMoves {
@@ -116,23 +126,23 @@ func move(state GameState) BattlesnakeMoveResponse {
 		if isSafe {
 			switch move {
 			case "up":
-				up := grid[myHead.X][myHead.Y+1]
-				if up != "" {
+				up := Coord{myHead.X, myHead.Y + 1}
+				if isEmpty(up, grid) {
 					possibleMoves["up"] = false
 				}
 			case "down":
-				down := grid[myHead.X][myHead.Y-1]
-				if down != "" {
+				down := Coord{myHead.X, myHead.Y - 1}
+				if isEmpty(down, grid) {
 					possibleMoves["down"] = false
 				}
 			case "right":
-				right := grid[myHead.X+1][myHead.Y]
-				if right != "" {
+				right := Coord{myHead.X + 1, myHead.Y}
+				if isEmpty(right, grid) {
 					possibleMoves["right"] = false
 				}
 			case "left":
-				left := grid[myHead.X-1][myHead.Y]
-				if left != "" {
+				left := Coord{myHead.X - 1, myHead.Y}
+				if isEmpty(left, grid) {
 					possibleMoves["left"] = false
 				}
 			}
@@ -142,10 +152,10 @@ func move(state GameState) BattlesnakeMoveResponse {
 	// Use information in GameState to seek out and find food.
 	// Assume Food[0] is the closest.
 	closestFood := state.Board.Food[0]
-	closestFoodDistance := distance(myHead, closestFood)
+	closestFoodDistance := distanceBetween(myHead, closestFood)
 	// Now check the rest of the food and find which is closest
 	for _, food := range state.Board.Food[1:] {
-		nextFoodDistance := distance(myHead, food)
+		nextFoodDistance := distanceBetween(myHead, food)
 		if nextFoodDistance < closestFoodDistance {
 			closestFood = food
 			closestFoodDistance = nextFoodDistance
@@ -202,7 +212,11 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 }
 
-func distance(a Coord, b Coord) float64 {
+func isEmpty(a Coord, grid [][]GridState) bool {
+	return grid[a.X][a.Y] == Empty
+}
+
+func distanceBetween(a Coord, b Coord) float64 {
 	dX := float64(b.X - a.X)
 	dY := float64(b.Y - a.Y)
 	return math.Sqrt(math.Pow(dX, 2) + math.Pow(dY, 2))
