@@ -213,7 +213,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 }
 
 func isEmpty(a Coord, grid [][]GridState) bool {
-	return grid[a.X][a.Y] != Head || grid[a.X][a.Y] != Head
+	return grid[a.X][a.Y] != Head || grid[a.X][a.Y] != Body
 }
 
 func distanceBetween(a Coord, b Coord) float64 {
