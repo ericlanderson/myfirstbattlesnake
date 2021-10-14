@@ -127,22 +127,22 @@ func move(state GameState) BattlesnakeMoveResponse {
 			switch move {
 			case "up":
 				up := Coord{myHead.X, myHead.Y + 1}
-				if isEmpty(up, grid) {
+				if isASnake(up, grid) {
 					possibleMoves["up"] = false
 				}
 			case "down":
 				down := Coord{myHead.X, myHead.Y - 1}
-				if isEmpty(down, grid) {
+				if isASnake(down, grid) {
 					possibleMoves["down"] = false
 				}
 			case "right":
 				right := Coord{myHead.X + 1, myHead.Y}
-				if isEmpty(right, grid) {
+				if isASnake(right, grid) {
 					possibleMoves["right"] = false
 				}
 			case "left":
 				left := Coord{myHead.X - 1, myHead.Y}
-				if isEmpty(left, grid) {
+				if isASnake(left, grid) {
 					possibleMoves["left"] = false
 				}
 			}
@@ -212,8 +212,8 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 }
 
-func isEmpty(a Coord, grid [][]GridState) bool {
-	return grid[a.X][a.Y] != Head || grid[a.X][a.Y] != Body
+func isASnake(a Coord, grid [][]GridState) bool {
+	return grid[a.X][a.Y] == Head || grid[a.X][a.Y] == Body
 }
 
 func distanceBetween(a Coord, b Coord) float64 {
