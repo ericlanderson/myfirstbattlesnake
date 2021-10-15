@@ -13,14 +13,48 @@ import (
 
 // Enums the golang way
 
-type GridContent int
+type Element int
 
 const (
-	Empty GridContent = iota
+	Empty Element = iota
 	Head
 	Body
 	Food
 )
+
+type GridElement interface {
+	Set(a Coord) Element
+	Get(a Coord) Element
+	GetRight(a Coord) Element
+	GetLeft(a Coord) Element
+	GetAbove(a Coord) Element
+	GetBelow(a Coord) Element
+}
+
+type Grid [][]Element
+
+func (g Grid) Get(a Coord) Element {
+	return g[a.X][a.Y]
+}
+
+func (g Grid) Set(a Coord, e Element) {
+	g[a.X][a.Y] = e
+}
+
+func (g Grid) GetRight(a Coord) Element {
+	return g[a.X+1][a.Y]
+}
+func (g Grid) GetLeft(a Coord) Element {
+	return g[a.X-1][a.Y]
+}
+
+func (g Grid) GetAbove(a Coord) Element {
+	return g[a.X][a.Y+1]
+}
+
+func (g Grid) GetBelow(a Coord) Element {
+	return g[a.X][a.Y-1]
+}
 
 // This function is called when you register your Battlesnake on play.battlesnake.com
 // See https://docs.battlesnake.com/guides/getting-started#step-4-register-your-battlesnake
@@ -72,37 +106,37 @@ func move(state GameState) BattlesnakeMoveResponse {
 	myHead := state.You.Body[0] // Coordinates of your head; same as state.You.Head
 	// myNeck := state.You.Body[1] // Coordinates of body piece directly behind your head (your "neck")
 
-	boardWidth := state.Board.Width
-	boardHeight := state.Board.Height
+	board := state.Board
 
 	// This is our board state where we record where each object (body or food)
 	// is located. Makes lookups much easier/faster/efficient.
-	grid := make([][]GridContent, boardHeight)
+	var grid Grid
+	grid = make([][]Element, board.Height)
 	for i := range grid {
-		grid[i] = make([]GridContent, boardWidth)
+		grid[i] = make([]Element, board.Width)
 	}
 
 	// record where each snake body element is on the grid.
 	for _, snake := range state.Board.Snakes {
 		// Can use this later to find "head" that are adjacent to safe spaces.
 		// Likely want to avoid those spaces.
-		grid[snake.Head.X][snake.Head.Y] = Head
+		grid.Set(Coord{snake.Head.X, snake.Head.Y}, Head)
 		// Now record the remainder of the body coordinates
 		for _, body := range snake.Body[1:] {
-			grid[body.X][body.Y] = Body
+			grid.Set(Coord{body.X, body.Y}, Body)
 		}
 	}
 
 	// record where each food element is on the grid.
 	for _, food := range state.Board.Food {
-		grid[food.X][food.Y] = Food
+		grid.Set(Coord{food.X, food.Y}, Food)
 	}
 
 	// Avoid hitting the walls
 	for move, _ := range possibleMoves {
 		switch move {
 		case "up":
-			if myHead.Y == boardHeight-1 {
+			if myHead.Y == board.Height-1 {
 				possibleMoves["up"] = false
 			}
 		case "down":
@@ -110,7 +144,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 				possibleMoves["down"] = false
 			}
 		case "right":
-			if myHead.X == boardWidth-1 {
+			if myHead.X == board.Width-1 {
 				possibleMoves["right"] = false
 			}
 		case "left":
@@ -126,23 +160,19 @@ func move(state GameState) BattlesnakeMoveResponse {
 		if isSafe {
 			switch move {
 			case "up":
-				up := Coord{myHead.X, myHead.Y + 1}
-				if doesMoveContain(Head, up, grid) || doesMoveContain(Body, up, grid) {
+				if grid.GetAbove(myHead) == Head || grid.GetAbove(myHead) == Body {
 					possibleMoves["up"] = false
 				}
 			case "down":
-				down := Coord{myHead.X, myHead.Y - 1}
-				if doesMoveContain(Head, down, grid) || doesMoveContain(Body, down, grid) {
+				if grid.GetBelow(myHead) == Head || grid.GetBelow(myHead) == Body {
 					possibleMoves["down"] = false
 				}
 			case "right":
-				right := Coord{myHead.X + 1, myHead.Y}
-				if doesMoveContain(Head, right, grid) || doesMoveContain(Body, right, grid) {
+				if grid.GetRight(myHead) == Head || grid.GetRight(myHead) == Body {
 					possibleMoves["right"] = false
 				}
 			case "left":
-				left := Coord{myHead.X - 1, myHead.Y}
-				if doesMoveContain(Head, left, grid) || doesMoveContain(Body, left, grid) {
+				if grid.GetLeft(myHead) == Head || grid.GetLeft(myHead) == Body {
 					possibleMoves["left"] = false
 				}
 			}
@@ -187,7 +217,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 		}
 	}
 
-	// The list of desired and safe moves
+	// The list of moves which are both safe and desired
 	desiredMoves := []string{}
 	for move, isDesired := range foodMoves {
 		if isDesired && possibleMoves[move] {
@@ -198,8 +228,48 @@ func move(state GameState) BattlesnakeMoveResponse {
 	finalMoves := []string{}
 	// Avoid moving adjacent to another snake head
 	for _, move := range desiredMoves {
-		if isMoveNotAdjacentTo(Head, myHead, move, grid) {
-			finalMoves = append(finalMoves, move)
+		var adjacent []Element
+		switch move {
+		case "up":
+			c := Coord{myHead.X, myHead.Y + 1}
+			adjacent = append(adjacent, grid.GetAbove(c))
+			adjacent = append(adjacent, grid.GetRight(c))
+			adjacent = append(adjacent, grid.GetLeft(c))
+			for _, e := range adjacent {
+				if e != Head {
+					finalMoves = append(finalMoves, "up")
+				}
+			}
+		case "down":
+			c := Coord{myHead.X, myHead.Y - 1}
+			adjacent = append(adjacent, grid.GetBelow(c))
+			adjacent = append(adjacent, grid.GetRight(c))
+			adjacent = append(adjacent, grid.GetLeft(c))
+			for _, e := range adjacent {
+				if e != Head {
+					finalMoves = append(finalMoves, "down")
+				}
+			}
+		case "right":
+			c := Coord{myHead.X + 1, myHead.Y}
+			adjacent = append(adjacent, grid.GetRight(c))
+			adjacent = append(adjacent, grid.GetAbove(c))
+			adjacent = append(adjacent, grid.GetBelow(c))
+			for _, e := range adjacent {
+				if e != Head {
+					finalMoves = append(finalMoves, "right")
+				}
+			}
+		case "left":
+			c := Coord{myHead.X - 1, myHead.Y}
+			adjacent = append(adjacent, grid.GetLeft(c))
+			adjacent = append(adjacent, grid.GetAbove(c))
+			adjacent = append(adjacent, grid.GetBelow(c))
+			for _, e := range adjacent {
+				if e != Head {
+					finalMoves = append(finalMoves, "left")
+				}
+			}
 		}
 	}
 
@@ -220,58 +290,8 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 }
 
-func doesMoveContain(item GridContent, a Coord, grid [][]GridContent) bool {
-	return grid[a.X][a.Y] == item
-}
-
 func distanceBetween(a Coord, b Coord) float64 {
 	dX := float64(b.X - a.X)
 	dY := float64(b.Y - a.Y)
 	return math.Sqrt(math.Pow(dX, 2) + math.Pow(dY, 2))
-}
-
-func isMoveNotAdjacentTo(item GridContent, myHead Coord, move string, grid [][]GridContent) bool {
-	switch move {
-	case "up":
-		if grid[myHead.X][myHead.Y+2] == item {
-			return false
-		}
-		if grid[myHead.X-1][myHead.Y+1] == item {
-			return false
-		}
-		if grid[myHead.X+1][myHead.Y+1] == item {
-			return false
-		}
-	case "down":
-		if grid[myHead.X][myHead.Y-2] == item {
-			return false
-		}
-		if grid[myHead.X-1][myHead.Y-1] == item {
-			return false
-		}
-		if grid[myHead.X+1][myHead.Y-1] == item {
-			return false
-		}
-	case "right":
-		if grid[myHead.X+2][myHead.Y] == item {
-			return false
-		}
-		if grid[myHead.X+1][myHead.Y-1] == item {
-			return false
-		}
-		if grid[myHead.X+1][myHead.Y+1] == item {
-			return false
-		}
-	case "left":
-		if grid[myHead.X-2][myHead.Y] == item {
-			return false
-		}
-		if grid[myHead.X-1][myHead.Y+1] == item {
-			return false
-		}
-		if grid[myHead.X-1][myHead.Y-1] == item {
-			return false
-		}
-	}
-	return true
 }
