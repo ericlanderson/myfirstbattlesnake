@@ -13,10 +13,10 @@ import (
 
 // Enums the golang way
 
-type GridState int
+type GridContent int
 
 const (
-	Empty GridState = iota
+	Empty GridContent = iota
 	Head
 	Body
 	Food
@@ -77,9 +77,9 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	// This is our board state where we record where each object (body or food)
 	// is located. Makes lookups much easier/faster/efficient.
-	grid := make([][]GridState, boardHeight)
+	grid := make([][]GridContent, boardHeight)
 	for i := range grid {
-		grid[i] = make([]GridState, boardWidth)
+		grid[i] = make([]GridContent, boardWidth)
 	}
 
 	// record where each snake body element is on the grid.
@@ -87,7 +87,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 		// Can use this later to find "head" that are adjacent to safe spaces.
 		// Likely want to avoid those spaces.
 		grid[snake.Head.X][snake.Head.Y] = Head
-		// Now set the remainder of the body coordinates
+		// Now record the remainder of the body coordinates
 		for _, body := range snake.Body[1:] {
 			grid[body.X][body.Y] = Body
 		}
@@ -127,22 +127,22 @@ func move(state GameState) BattlesnakeMoveResponse {
 			switch move {
 			case "up":
 				up := Coord{myHead.X, myHead.Y + 1}
-				if isASnake(up, grid) {
+				if doesMoveContain(Head, up, grid) || doesMoveContain(Body, up, grid) {
 					possibleMoves["up"] = false
 				}
 			case "down":
 				down := Coord{myHead.X, myHead.Y - 1}
-				if isASnake(down, grid) {
+				if doesMoveContain(Head, down, grid) || doesMoveContain(Body, down, grid) {
 					possibleMoves["down"] = false
 				}
 			case "right":
 				right := Coord{myHead.X + 1, myHead.Y}
-				if isASnake(right, grid) {
+				if doesMoveContain(Head, right, grid) || doesMoveContain(Body, right, grid) {
 					possibleMoves["right"] = false
 				}
 			case "left":
 				left := Coord{myHead.X - 1, myHead.Y}
-				if isASnake(left, grid) {
+				if doesMoveContain(Head, left, grid) || doesMoveContain(Body, left, grid) {
 					possibleMoves["left"] = false
 				}
 			}
@@ -195,15 +195,23 @@ func move(state GameState) BattlesnakeMoveResponse {
 		}
 	}
 
+	finalMoves := []string{}
+	// Avoid moving adjacent to another snake head
+	for _, move := range desiredMoves {
+		if isMoveNotAdjacentTo(Head, myHead, move, grid) {
+			finalMoves = append(finalMoves, move)
+		}
+	}
+
 	if len(safeMoves) == 0 {
 		nextMove = "down"
 		log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
 	} else {
-		if len(desiredMoves) == 0 {
+		if len(finalMoves) == 0 {
 			nextMove = safeMoves[rand.Intn(len(safeMoves))]
 			log.Printf("%s MOVE %d: No desired moves detected! Making random safe move: %s\n", state.Game.ID, state.Turn, nextMove)
 		} else {
-			nextMove = desiredMoves[rand.Intn(len(desiredMoves))]
+			nextMove = finalMoves[rand.Intn(len(finalMoves))]
 			log.Printf("%s MOVE %d: Making random desired move: %s\n", state.Game.ID, state.Turn, nextMove)
 		}
 	}
@@ -212,12 +220,58 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 }
 
-func isASnake(a Coord, grid [][]GridState) bool {
-	return grid[a.X][a.Y] == Head || grid[a.X][a.Y] == Body
+func doesMoveContain(item GridContent, a Coord, grid [][]GridContent) bool {
+	return grid[a.X][a.Y] == item
 }
 
 func distanceBetween(a Coord, b Coord) float64 {
 	dX := float64(b.X - a.X)
 	dY := float64(b.Y - a.Y)
 	return math.Sqrt(math.Pow(dX, 2) + math.Pow(dY, 2))
+}
+
+func isMoveNotAdjacentTo(item GridContent, myHead Coord, move string, grid [][]GridContent) bool {
+	switch move {
+	case "up":
+		if grid[myHead.X][myHead.Y+2] == item {
+			return false
+		}
+		if grid[myHead.X-1][myHead.Y+1] == item {
+			return false
+		}
+		if grid[myHead.X+1][myHead.Y+1] == item {
+			return false
+		}
+	case "down":
+		if grid[myHead.X][myHead.Y-2] == item {
+			return false
+		}
+		if grid[myHead.X-1][myHead.Y-1] == item {
+			return false
+		}
+		if grid[myHead.X+1][myHead.Y-1] == item {
+			return false
+		}
+	case "right":
+		if grid[myHead.X+2][myHead.Y] == item {
+			return false
+		}
+		if grid[myHead.X+1][myHead.Y-1] == item {
+			return false
+		}
+		if grid[myHead.X+1][myHead.Y+1] == item {
+			return false
+		}
+	case "left":
+		if grid[myHead.X-2][myHead.Y] == item {
+			return false
+		}
+		if grid[myHead.X-1][myHead.Y+1] == item {
+			return false
+		}
+		if grid[myHead.X-1][myHead.Y-1] == item {
+			return false
+		}
+	}
+	return true
 }
