@@ -25,7 +25,10 @@ func TestNeckAvoidance(t *testing.T) {
 	}
 	state := GameState{
 		Board: Board{
+			Height: 11,
+			Width:  11,
 			Snakes: []Battlesnake{me, above, right},
+			Food:   []Coord{{0, 0}, {10, 10}},
 		},
 		You: me,
 	}
