@@ -28,20 +28,56 @@ func TestNeckAvoidance(t *testing.T) {
 			Height: 11,
 			Width:  11,
 			Snakes: []Battlesnake{me, above, right},
-			Food:   []Coord{{0, 0}, {10, 10}},
+			Food:   []Coord{{7, 0}, {10, 10}},
 		},
 		You: me,
 	}
 
 	// Act 1,000x (this isn't a great way to test, but it's okay for starting out)
-	for i := 0; i < 10; i++ {
-		_ = move(state)
-		// nextMove := move(state)
-		// Assert never move left
-		// if nextMove.Move == "left" {
-		// 	t.Errorf("snake moved onto its own neck, %s", nextMove.Move)
-		// }
-	}
+	// for i := 0; i < 10; i++ {
+	// _ = move(state)
+	// nextMove := move(state)
+	// Assert never move left
+	// if nextMove.Move == "left" {
+	// 	t.Errorf("snake moved onto its own neck, %s", nextMove.Move)
+	// }
+	// }
+	move(state)
 }
 
 // TODO: More GameState test cases!
+
+func TestSnackAvoidance(t *testing.T) {
+	// Arrange
+	me := Battlesnake{
+		// Length 3, facing right
+		Head: Coord{X: 2, Y: 0},
+		Body: []Coord{{X: 2, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 0}},
+	}
+	above := Battlesnake{
+		// Length 2, facing right
+		// Above "me"
+		Head: Coord{X: 1, Y: 1},
+		Body: []Coord{{X: 1, Y: 1}, {X: 0, Y: 1}},
+	}
+	state := GameState{
+		Board: Board{
+			Height: 11,
+			Width:  11,
+			Snakes: []Battlesnake{me, above},
+			Food:   []Coord{{7, 0}, {10, 10}},
+		},
+		You: me,
+	}
+
+	// Act 1,000x (this isn't a great way to test, but it's okay for starting out)
+	// for i := 0; i < 10; i++ {
+	// 	_ = move(state)
+	// nextMove := move(state)
+	// Assert never move left
+	// if nextMove.Move == "left" {
+	// 	t.Errorf("snake moved onto its own neck, %s", nextMove.Move)
+	// }
+	// }
+	move(state)
+}

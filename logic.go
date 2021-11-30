@@ -234,9 +234,6 @@ func move(state GameState) BattlesnakeMoveResponse {
 		foodMoves["down"] = true
 	}
 
-	// Finally, choose a move from the available safe moves.
-	var nextMove string
-
 	// The list of safe moves
 	safeMoves := []string{}
 	for move, isSafe := range possibleMoves {
@@ -294,6 +291,9 @@ func move(state GameState) BattlesnakeMoveResponse {
 			}
 		}
 	}
+
+	// Finally, choose a move from the available safe moves.
+	var nextMove string
 
 	if len(safeMoves) == 0 {
 		nextMove = "down"
